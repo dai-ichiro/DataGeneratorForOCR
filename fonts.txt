@@ -1,13 +1,19 @@
-Arial
-Courier New
-Consolas
-BIZ UDPゴシック
-BIZ UDP明朝 Medium
-Lucida Console
-UD デジタル 教科書体 N-R
-UD デジタル 教科書体 NK-R
-メイリオ
-游明朝
-游ゴシック
-ＭＳ Ｐゴシック
-ＭＳ Ｐ明朝
+Arial,0
+Arial,1
+Courier New,0
+Courier New,1
+Consolas,0
+Consolas,1
+BIZ UDPゴシック,0
+BIZ UDPゴシック,1
+BIZ UDP明朝 Medium,0
+Lucida Console,0
+UD デジタル 教科書体 N-R,0
+UD デジタル 教科書体 NK-R,0
+メイリオ,0
+メイリオ,1
+游明朝,0
+游ゴシック,0
+游ゴシック,1
+ＭＳ Ｐゴシック,0
+ＭＳ Ｐ明朝,0
