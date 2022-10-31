@@ -27,39 +27,49 @@ class Window(QMainWindow):
     def saveimage(self):
         
         data_list = []
-        for i, text in enumerate(texts):
-            
-            self.label_1.setText(text)
+        
+        for r in range(repeat_n):
+            for i, text in enumerate(texts):
+                
+                self.label_1.setText(text)
 
-            # font 
-            random_font = random.randrange(0, len(fonts))
-            fontfamily, bold = fonts[random_font].split(',')
-            self.currentfont.setFamily(fontfamily)
-            self.currentfont.setBold(int(bold))
+                # font 
+                random_font = random.randrange(0, len(fonts))
+                fontfamily, bold = fonts[random_font].split(',')
+                self.currentfont.setFamily(fontfamily)
+                self.currentfont.setBold(int(bold))
 
-            # font size
-            random_font = random.randrange(start=16, stop=22, step=2)
-            self.currentfont.setPointSize(random_font)
+                # Letter spacing
+                if len(text) < 20:
+                    random_spacing = random.randrange(start=100, stop=120, step=5)
+                else:
+                    random_spacing = random.randrange(start=85, stop=105, step=5)
+                self.currentfont.setLetterSpacing(QFont.PercentageSpacing, random_spacing)
 
-            self.label_1.setFont(self.currentfont)
-            self.label_1.adjustSize()
+                # font size
+                random_font = random.randrange(start=16, stop=22, step=2)
+                self.currentfont.setPointSize(random_font)
 
-            # margin
-            random_margin = random.randrange(start=4, stop=16, step=4)
-            width = self.label_1.width() + random_margin
-            height = self.label_1.height() + random_margin
-            self.label_1.resize(width, height)
+                self.label_1.setFont(self.currentfont)
+                self.label_1.adjustSize()
 
-            image = ImageQt.fromqpixmap(self.label_1.grab()) #RGBA
-            background = Image.new("RGB", image.size, (255, 255, 255))
-            background.paste(image, mask=image.split()[3]) # 3 is the alpha channel
-            background.save(os.path.join('train', f'{i}.jpg'), quality = 95)
+                # margin
+                random_margin = random.randrange(start=4, stop=16, step=4)
+                width = self.label_1.width() + random_margin
+                height = self.label_1.height() + random_margin
+                self.label_1.resize(width, height)
 
-            data = {
-                'img_path': f'{i}.jpg',
-                'instances':[{'text':text}]
-                }
-            data_list.append(data)
+                image_fname = f'{r}_{i}.jpg'
+                image = ImageQt.fromqpixmap(self.label_1.grab()) #RGBA
+                background = Image.new("RGB", image.size, (255, 255, 255))
+                background.paste(image, mask=image.split()[3]) # 3 is the alpha channel
+                background.save(os.path.join('train', image_fname), quality = 95)
+
+                data = {
+                    'img_path': image_fname,
+                    'instances':[{'text':text}]
+                    }
+                data_list.append(data)
 
         result = {
             'metainfo':{
@@ -73,6 +83,8 @@ class Window(QMainWindow):
             json.dump(result, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
+
+    repeat_n = 2
 
     os.makedirs('train', exist_ok=True)
     
