@@ -33,7 +33,7 @@ class Window(QMainWindow):
                 
                 self.label_1.setText(text)
 
-                # font 
+                # Font 
                 random_font = random.randrange(0, len(fonts))
                 fontfamily, bold = fonts[random_font].split(',')
                 self.currentfont.setFamily(fontfamily)
@@ -46,14 +46,14 @@ class Window(QMainWindow):
                     random_spacing = random.randrange(start=85, stop=105, step=5)
                 self.currentfont.setLetterSpacing(QFont.PercentageSpacing, random_spacing)
 
-                # font size
+                # Font size
                 random_font = random.randrange(start=16, stop=22, step=2)
                 self.currentfont.setPointSize(random_font)
 
                 self.label_1.setFont(self.currentfont)
                 self.label_1.adjustSize()
 
-                # margin
+                # Margin
                 random_margin = random.randrange(start=4, stop=16, step=4)
                 width = self.label_1.width() + random_margin
                 height = self.label_1.height() + random_margin
@@ -63,7 +63,10 @@ class Window(QMainWindow):
                 image = ImageQt.fromqpixmap(self.label_1.grab()) #RGBA
                 background = Image.new("RGB", image.size, (255, 255, 255))
                 background.paste(image, mask=image.split()[3]) # 3 is the alpha channel
-                background.save(os.path.join('train', image_fname), quality = 95)
+
+                # Quality
+                random_quality = random.randrange(start=85, stop=100, step=5)
+                background.save(os.path.join('train', image_fname), quality = random_quality)
 
                 data = {
                     'img_path': image_fname,
