@@ -2,7 +2,7 @@ import glob
 import pandas as pd
 
 max_len = 35
-split_len = 20
+split_len = 25
 
 ZEN = "".join(chr(0xff01 + i) for i in range(94))
 HAN = "".join(chr(0x21 + i) for i in range(94))
