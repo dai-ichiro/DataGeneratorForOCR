@@ -1,6 +1,9 @@
 import glob
 import pandas as pd
 
+max_len = 35
+split_len = 20
+
 ZEN = "".join(chr(0xff01 + i) for i in range(94))
 HAN = "".join(chr(0x21 + i) for i in range(94))
 HAN2ZEN = str.maketrans(HAN, ZEN)
@@ -22,26 +25,26 @@ new_general_name = []
 new_product_name = []
 
 for each in general_name:
-    if len(each) < 36:
-        new_general_name.append(each)
+    if len(each) > max_len:
+        new_general_name.append(each[:split_len])
+        new_general_name.append(each[-split_len:])
     else:
-        new_general_name.append(each[:25])
-        new_general_name.append(each[-25:])
-
+        new_general_name.append(each)
+        
 for each in product_name:
-    if len(each) < 30:
+    if len(each) < (max_len -3):
         for i in range(1, 13):
             with_header = f'［{str(i).translate(HAN2ZEN)}］{each}'
             new_product_name.append(with_header)
-    elif len(each) > 35:
-        new_product_name.append(each[:25])
-        new_product_name.append(each[-25:])
+    elif len(each) > max_len:
+        new_product_name.append(each[:split_len])
+        new_product_name.append(each[-split_len:])
     else:
         new_product_name.append(each)
 
 all_names = set(new_general_name) | set(new_product_name)
 
-with open('texts.txt', 'w', encoding='utf-8') as f:
+with open(f'texts_{max_len}_{split_len}.txt', 'w', encoding='utf-8') as f:
     f.write('\n'.join(all_names))
 
 with open('dicts.txt', 'w', encoding='utf-8') as f:
