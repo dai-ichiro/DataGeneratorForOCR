@@ -54,7 +54,7 @@ class Window(QMainWindow):
                 self.label_1.adjustSize()
 
                 # Margin
-                random_margin = random.randrange(start=4, stop=16, step=4)
+                random_margin = random.randrange(start=4, stop=28, step=8)
                 width = self.label_1.width() + random_margin
                 height = self.label_1.height() + random_margin
                 self.label_1.resize(width, height)
@@ -87,7 +87,7 @@ class Window(QMainWindow):
 
 if __name__ == "__main__":
 
-    repeat_n = 2
+    repeat_n = 3
 
     os.makedirs('train', exist_ok=True)
     
