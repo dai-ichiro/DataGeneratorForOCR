@@ -1,7 +1,7 @@
 import glob
 import pandas as pd
 
-max_len = 35
+max_len = 25
 
 ZEN = "".join(chr(0xff01 + i) for i in range(94))
 HAN = "".join(chr(0x21 + i) for i in range(94))
@@ -21,7 +21,7 @@ new_product_name = []
         
 for each in product_name:
     if len(each) < (max_len -3):
-        for i in range(1, 13):
+        for i in range(1, 11):
             with_header = f'［{str(i).translate(HAN2ZEN)}］{each}'
             new_product_name.append(with_header)
     elif len(each) > max_len:
