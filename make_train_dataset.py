@@ -40,10 +40,7 @@ class Window(QMainWindow):
                 self.currentfont.setBold(int(bold))
 
                 # Letter spacing
-                if len(text) < 15:
-                    random_spacing = random.randrange(start=100, stop=120, step=5)
-                else:
-                    random_spacing = random.randrange(start=85, stop=105, step=5)
+                random_spacing = random.randrange(start=85, stop=120, step=5)
                 self.currentfont.setLetterSpacing(QFont.PercentageSpacing, random_spacing)
 
                 # Font size
