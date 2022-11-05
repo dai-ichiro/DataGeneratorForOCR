@@ -1,5 +1,6 @@
 import glob
 import pandas as pd
+import random
 
 max_len = 25
 
@@ -21,8 +22,10 @@ new_product_name = []
         
 for each in product_name:
     if len(each) < (max_len -3):
-        for i in range(1, 11):
-            with_header = f'［{str(i).translate(HAN2ZEN)}］{each}'
+        new_product_name.append(each)
+        random_nums = random.sample(range(20), 3)
+        for num in random_nums:
+            with_header = f'［{str(num).translate(HAN2ZEN)}］{each}'
             new_product_name.append(with_header)
     elif len(each) > max_len:
         new_product_name.append(each[:max_len])

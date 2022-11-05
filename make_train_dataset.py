@@ -84,7 +84,7 @@ class Window(QMainWindow):
 
 if __name__ == "__main__":
 
-    repeat_n = 3
+    repeat_n = 5
 
     os.makedirs('train', exist_ok=True)
     
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         lines = f.readlines()
     fonts = [x.strip() for x in lines]
 
-    with open('texts.txt', 'r', encoding='utf-8') as f:
+    with open('texts_max_len_25.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
     texts = [x.strip() for x in lines]
 
