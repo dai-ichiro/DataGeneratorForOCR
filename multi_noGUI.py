@@ -14,13 +14,42 @@ parser.add_argument('--repeat', type=int, default=3, help='count of repeat' )
 args = parser.parse_args()
 repeat_n = args.repeat
 
-class MyThread(QThread):
+class MakeJson(QThread):
+    makingJson_finish_signal = Signal(bool)
+    def __init__(self):
+        super().__init__()
+    def run(self):
+        data_list = []
+        for i in range(repeat_n):
+            for text_i, text in enumerate(texts):
+                image_fname = f'{i}_{text_i}.jpg'
+        
+                data = {
+                    'img_path': image_fname,
+                    'instances':[{'text':text}]
+                    }
+                data_list.append(data)
+        
+        result = {
+            'metainfo':{
+                'dataset_type':'TextRecogDataset',
+                'task_name':'textrecog'
+            },
+            'data_list':data_list
+        }
+
+        with open('train_labels.json', 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        
+        self.makingJson_finish_signal.emit(True)
+    
+class MakeImage(QThread):
 
     finish_signal = Signal(int)
 
     def __init__(self, thread_num):
         super().__init__()
-        
+        self.currentfont = QFont()
         self.thread_num = thread_num
         
 
@@ -34,24 +63,23 @@ class MyThread(QThread):
     
     def saveimage(self):
         for i, text in enumerate(texts):
-            currentfont = QFont()
             self.label_1.setText(text)
 
             # Font 
             random_font = random.randrange(0, len(fonts))
             fontfamily, bold = fonts[random_font].split(',')
-            currentfont.setFamily(fontfamily)
-            currentfont.setBold(int(bold))
+            self.currentfont.setFamily(fontfamily)
+            self.currentfont.setBold(int(bold))
 
             # Letter spacing
             random_spacing = random.randrange(start=85, stop=120, step=5)
-            currentfont.setLetterSpacing(QFont.PercentageSpacing, random_spacing)
+            self.currentfont.setLetterSpacing(QFont.PercentageSpacing, random_spacing)
 
             # Font size
             random_font = random.randrange(start=16, stop=22, step=2)
-            currentfont.setPointSize(random_font)
+            self.currentfont.setPointSize(random_font)
 
-            self.label_1.setFont(currentfont)
+            self.label_1.setFont(self.currentfont)
             self.label_1.adjustSize()
 
             # Margin
@@ -81,12 +109,16 @@ class Window(QMainWindow):
         self.start_time = time.time()
 
         for i in range(repeat_n):
-            self.thread_list.append(MyThread(i))
+            self.thread_list.append(MakeImage(i))
 
         for i in range(repeat_n):
             self.thread_list[i].finish_signal.connect(self.update_signal)
         for i in range(repeat_n):
             self.thread_list[i].start()
+
+        self.makingJsonThread = MakeJson()
+        self.makingJsonThread.makingJson_finish_signal.connect(self.makingJson_finish)
+        self.makingJsonThread.start()
 
     @Slot(int)
     def update_signal(self, recieved_signal):
@@ -97,31 +129,12 @@ class Window(QMainWindow):
             collapsed = time.time() - self.start_time
             print(f'{collapsed} sec')
             sys.exit()
+    
+    @Slot(bool)
+    def makingJson_finish(self, recieved_signal):
+        if recieved_signal:
+            self.makingJsonThread.quit()
 
-
-        '''
-
-                data = {
-                    'img_path': image_fname,
-                    'instances':[{'text':text}]
-                    }
-                data_list.append(data)
-
-        result = {
-            'metainfo':{
-                'dataset_type':'TextRecogDataset',
-                'task_name':'textrecog'
-            },
-            'data_list':data_list
-        }
-
-        with open('train_labels.json', 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-        
-        collapse = time.time() - start_time
-
-        print(f'{collapse} sec')
-        '''
 if __name__ == "__main__":
 
     os.makedirs('train', exist_ok=True)
