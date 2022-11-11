@@ -83,7 +83,7 @@ class MakeImage(QThread):
             self.label_1.adjustSize()
 
             # Margin
-            random_margin = random.randrange(start=4, stop=28, step=8)
+            random_margin = random.randrange(start=4, stop=16, step=4)
             width = self.label_1.width() + random_margin
             height = self.label_1.height() + random_margin
             self.label_1.resize(width, height)
