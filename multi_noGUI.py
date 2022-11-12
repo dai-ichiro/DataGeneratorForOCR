@@ -5,14 +5,17 @@ import sys
 import os
 import json
 import random
-from PIL import ImageQt
+from PIL import ImageQt, Image
 import time
+import numpy as np
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument('--repeat', type=int, default=3, help='count of repeat' )
+parser.add_argument('--noise', action='store_true', help="add Gaussian Noise")
 args = parser.parse_args()
 repeat_n = args.repeat
+noise_true = args.noise
 
 class MakeJson(QThread):
     makingJson_finish_signal = Signal(bool)
@@ -88,11 +91,17 @@ class MakeImage(QThread):
             height = self.label_1.height() + random_margin
             self.label_1.resize(width, height)
 
-            image_fname = f'{self.thread_num}_{i}.jpg'
             image = ImageQt.fromqpixmap(self.label_1.grab()) #RGB
+
+            # Noise
+            if noise_true:
+                original_img = np.array(image)
+                noise = np.random.normal(0, 2, original_img.shape)
+                image = Image.fromarray((original_img + noise).astype('uint8'))
 
             # Quality
             random_quality = random.randrange(start=85, stop=100, step=5)
+            image_fname = f'{self.thread_num}_{i}.jpg'
             image.save(os.path.join('train', image_fname), quality = random_quality)
 
 class Window(QMainWindow):
