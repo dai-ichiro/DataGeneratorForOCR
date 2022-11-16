@@ -47,9 +47,46 @@ class MakeJson(QThread):
 
         with open('train_labels.json', 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
-        
+
+        if trdg_true:
+            with open('trainTRDG_labels.json', 'w', encoding='utf-8') as f:
+                json.dump(result, f, indent=2, ensure_ascii=False)
+
         self.makingJson_finish_signal.emit(True)
+
+class MakeImageTRDG(QThread):
+
+    trdg_finish_signal = Signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        self.currentfont = QFont()
+        
+    def run(self):
+        os.makedirs('trainTRDG', exist_ok=True)
+        fontsTRDG = glob.glob('fonts/*.ttf')
     
+        for rep in range(repeat_n):
+            random.shuffle(fontsTRDG)
+
+            generator = GeneratorFromStrings(
+                texts,
+                fonts = fontsTRDG,
+                count = len(texts),
+                # Text blurring
+                blur = 1,
+                random_blur = True,
+                # Text skewing
+                skewing_angle = 1,
+                random_skew = True,
+            )
+            
+            for i, (img, _) in enumerate(generator):
+                image_fname = f'{rep}_{i}.jpg'
+                img.save(os.path.join('trainTRDG', image_fname), quality=95)
+        
+        self.trdg_finish_signal.emit(True)
+
 class MakeImage(QThread):
 
     finish_signal = Signal(int)
@@ -59,7 +96,6 @@ class MakeImage(QThread):
         self.currentfont = QFont()
         self.thread_num = thread_num
         
-
     def run(self):
         self.label_1 = QLabel()
         self.label_1.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
@@ -112,6 +148,7 @@ class Window(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.thread_count = 0
         self.finish_count = 0
         self.initUI()
 
@@ -123,6 +160,7 @@ class Window(QMainWindow):
 
         for i in range(repeat_n):
             self.thread_list.append(MakeImage(i))
+            self.thread_count += 1
 
         for i in range(repeat_n):
             self.thread_list[i].finish_signal.connect(self.update_signal)
@@ -130,63 +168,41 @@ class Window(QMainWindow):
             self.thread_list[i].start()
 
         self.makingJsonThread = MakeJson()
+        self.thread_count += 1
         self.makingJsonThread.makingJson_finish_signal.connect(self.makingJson_finish)
         self.makingJsonThread.start()
+
+        if trdg_true:
+            self.trdgThread = MakeImageTRDG()
+            self.thread_count += 1
+            self.trdgThread.trdg_finish_signal.connect(self.trdg_finish)
+            self.trdgThread.start()
 
     @Slot(int)
     def update_signal(self, recieved_signal):
         self.thread_list[recieved_signal].quit()
         self.finish_count += 1
-
-        if self.finish_count == repeat_n:
-            collapsed = time.time() - self.start_time
-            print(f'{collapsed} sec')
-            sys.exit()
+        self.all_finish()
     
     @Slot(bool)
     def makingJson_finish(self, recieved_signal):
         if recieved_signal:
             self.makingJsonThread.quit()
-
-def makeDatasetTRDG():
-    data_list = []
-    os.makedirs('testTRDG', exist_ok=True)
-    fontsTRDG = glob.glob('fonts/*.ttf')
+            self.finish_count += 1
+            self.all_finish()
     
-    for rep in range(repeat_n):
-        random.shuffle(fontsTRDG)
-
-        generator = GeneratorFromStrings(
-            texts,
-            fonts = fontsTRDG,
-            count = len(texts),
-            # Text blurring
-            blur = 1,
-            random_blur = True,
-            # Text skewing
-            skewing_angle = 1,
-            random_skew = True,
-        )
-
-        for i, (img, lbl) in enumerate(generator):
-            image_fname = f'{rep}_{i}.jpg'
-            img.save(os.path.join('testTRDG', image_fname), quality=95)
-            data = {
-                    'img_path': image_fname,
-                    'instances':[{'text':lbl}]
-                    }
-            data_list.append(data)
-        
-        result = {
-            'metainfo':{
-                'dataset_type':'TextRecogDataset',
-                'task_name':'textrecog'
-            },
-            'data_list':data_list
-        }
-
-        with open('train_labels_TRDG.json', 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+    @Slot(bool)
+    def trdg_finish(self, recieved_signal):
+        if recieved_signal:
+            self.trdgThread.quit()
+            self.finish_count += 1
+            self.all_finish()
+    
+    def all_finish(self):
+        if self.finish_count == self.thread_count:
+            collapsed = time.time() - self.start_time
+            print(f'{collapsed} sec')
+            sys.exit()
 
 if __name__ == "__main__":
 
@@ -199,9 +215,6 @@ if __name__ == "__main__":
     with open('texts.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
     texts = [x.strip() for x in lines]
-
-    if trdg_true:
-        makeDatasetTRDG()
 
     app = QApplication([])
     ex =Window()
