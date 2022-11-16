@@ -108,6 +108,7 @@ class Window(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.thread_count = 0
         self.finish_count = 0
         self.initUI()
 
@@ -119,6 +120,7 @@ class Window(QMainWindow):
 
         for i in range(repeat_n):
             self.thread_list.append(MakeImage(i))
+            self.thread_count += 1
 
         for i in range(repeat_n):
             self.thread_list[i].finish_signal.connect(self.update_signal)
@@ -126,6 +128,7 @@ class Window(QMainWindow):
             self.thread_list[i].start()
 
         self.makingJsonThread = MakeJson()
+        self.thread_count += 1
         self.makingJsonThread.makingJson_finish_signal.connect(self.makingJson_finish)
         self.makingJsonThread.start()
 
@@ -133,16 +136,20 @@ class Window(QMainWindow):
     def update_signal(self, recieved_signal):
         self.thread_list[recieved_signal].quit()
         self.finish_count += 1
+        self.all_finish()
 
-        if self.finish_count == repeat_n:
-            collapsed = time.time() - self.start_time
-            print(f'{collapsed} sec')
-            sys.exit()
-    
     @Slot(bool)
     def makingJson_finish(self, recieved_signal):
         if recieved_signal:
             self.makingJsonThread.quit()
+            self.finish_count += 1
+            self.all_finish()
+    
+    def all_finish(self):
+        if self.thread_count == self.finish_count:
+            collapsed = time.time() - self.start_time
+            print(f'{collapsed} sec')
+            sys.exit()
 
 if __name__ == "__main__":
 
