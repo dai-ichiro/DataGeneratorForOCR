@@ -56,36 +56,32 @@ class MakeJson(QThread):
 
 class MakeImageTRDG(QThread):
 
-    trdg_finish_signal = Signal(bool)
+    trdg_finish_signal = Signal(int)
 
-    def __init__(self):
+    def __init__(self, thread_num):
         super().__init__()
-        self.currentfont = QFont()
+        self.thread_num = thread_num
+        self.fonts = random.sample(fontsTRDG, len(fontsTRDG))
         
     def run(self):
-        os.makedirs('trainTRDG', exist_ok=True)
-        fontsTRDG = glob.glob('fonts/*.ttf')
-    
-        for rep in range(repeat_n):
-            random.shuffle(fontsTRDG)
-
-            generator = GeneratorFromStrings(
-                texts,
-                fonts = fontsTRDG,
-                count = len(texts),
-                # Text blurring
-                blur = 1,
-                random_blur = True,
-                # Text skewing
-                skewing_angle = 1,
-                random_skew = True,
-            )
-            
-            for i, (img, _) in enumerate(generator):
-                image_fname = f'{rep}_{i}.jpg'
-                img.save(os.path.join('trainTRDG', image_fname), quality=95)
         
-        self.trdg_finish_signal.emit(True)
+        generator = GeneratorFromStrings(
+            texts,
+            fonts = self.fonts,
+            count = len(texts),
+            # Text blurring
+            blur = 1,
+            random_blur = True,
+            # Text skewing
+            skewing_angle = 1,
+            random_skew = True,
+        )
+        
+        for i, (img, _) in enumerate(generator):
+            image_fname = f'{self.thread_num}_{i}.jpg'
+            img.save(os.path.join('trainTRDG', image_fname), quality=95)
+        
+        self.trdg_finish_signal.emit(self.thread_num)
 
 class MakeImage(QThread):
 
@@ -163,7 +159,7 @@ class Window(QMainWindow):
             self.thread_count += 1
 
         for i in range(repeat_n):
-            self.thread_list[i].finish_signal.connect(self.update_signal)
+            self.thread_list[i].finish_signal.connect(self.pyside_finish)
         for i in range(repeat_n):
             self.thread_list[i].start()
 
@@ -173,28 +169,31 @@ class Window(QMainWindow):
         self.makingJsonThread.start()
 
         if trdg_true:
-            self.trdgThread = MakeImageTRDG()
-            self.thread_count += 1
-            self.trdgThread.trdg_finish_signal.connect(self.trdg_finish)
-            self.trdgThread.start()
+            self.trdg_thread_list = []
+            for i in range(repeat_n):
+                self.trdg_thread_list.append(MakeImageTRDG(i))
+                self.thread_count += 1
+            for i in range(repeat_n):
+                self.trdg_thread_list[i].trdg_finish_signal.connect(self.trdg_finish)
+            for i in range(repeat_n):
+                self.trdg_thread_list[i].start()
 
     @Slot(int)
-    def update_signal(self, recieved_signal):
+    def pyside_finish(self, recieved_signal):
         self.thread_list[recieved_signal].quit()
         self.finish_count += 1
         self.all_finish()
     
+    @Slot(int)
+    def trdg_finish(self, recieved_signal):
+        self.trdg_thread_list[recieved_signal].quit()
+        self.finish_count += 1
+        self.all_finish()
+
     @Slot(bool)
     def makingJson_finish(self, recieved_signal):
         if recieved_signal:
             self.makingJsonThread.quit()
-            self.finish_count += 1
-            self.all_finish()
-    
-    @Slot(bool)
-    def trdg_finish(self, recieved_signal):
-        if recieved_signal:
-            self.trdgThread.quit()
             self.finish_count += 1
             self.all_finish()
     
@@ -215,6 +214,10 @@ if __name__ == "__main__":
     with open('texts.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
     texts = [x.strip() for x in lines]
+
+    if trdg_true:
+        os.makedirs('trainTRDG', exist_ok=True)
+        fontsTRDG = glob.glob('fonts/*.ttf')
 
     app = QApplication([])
     ex =Window()
